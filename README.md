@@ -1,4 +1,4 @@
-# Node.js REST API
+# Deno REST API
 
 Repositório para estudos utilizando **Deno**.
 
