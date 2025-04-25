@@ -1,67 +1,35 @@
-import { Context } from "https://deno.land/x/oak/mod.ts";
-import { Task } from "../models/task.ts";
+import { Task, tasks } from "../models/task.ts";
+import { RouterContext } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 
-let tasks: Task[] = [];
-
-// Obter todas as tarefas
-export const getTasks = (context: Context) => {
-  context.response.body = tasks;
+// GET /tasks
+export const getAllTasks = (ctx: RouterContext) => {
+  ctx.response.body = tasks;
 };
 
-// Criar uma nova tarefa
-export const createTask = async (context: Context) => {
-  const body = await context.request.body();
-  const { title } = await body.value;
+// GET /tasks/:id
+export const getTaskById = (ctx: RouterContext) => {
+  const task = tasks.find(t => t.id === ctx.params.id);
+  if (!task) ctx.throw(404, "Task not found");
+  ctx.response.body = task;
+};
 
-  if (!title) {
-    context.response.status = 400;
-    context.response.body = { error: "Title is required" };
-    return;
-  }
-
+// POST /tasks
+export const createTask = async (ctx: RouterContext) => {
+  const { title } = await ctx.request.body().value;
   const newTask: Task = {
     id: crypto.randomUUID(),
     title,
-    completed: false,
+    completed: false
   };
-
   tasks.push(newTask);
-  context.response.status = 201;
-  context.response.body = newTask;
+  ctx.response.status = 201;
+  ctx.response.body = newTask;
 };
 
-// Atualizar uma tarefa
-export const updateTask = async (context: Context) => {
-  const { id } = context.params || {};
-  const body = await context.request.body();
-  const { title, completed } = await body.value;
-
-  const task = tasks.find((task) => task.id === id);
-
-  if (!task) {
-    context.response.status = 404;
-    context.response.body = { error: "Task not found" };
-    return;
-  }
-
-  if (title !== undefined) task.title = title;
-  if (completed !== undefined) task.completed = completed;
-
-  context.response.body = task;
-};
-
-// Deletar uma tarefa
-export const deleteTask = (context: Context) => {
-  const { id } = context.params || {};
-
-  const taskIndex = tasks.findIndex((task) => task.id === id);
-
-  if (taskIndex === -1) {
-    context.response.status = 404;
-    context.response.body = { error: "Task not found" };
-    return;
-  }
-
-  tasks.splice(taskIndex, 1);
-  context.response.status = 204;
+// DELETE /tasks/:id
+export const deleteTask = (ctx: RouterContext) => {
+  const index = tasks.findIndex(t => t.id === ctx.params.id);
+  if (index === -1) ctx.throw(404, "Task not found");
+  tasks.splice(index, 1);
+  ctx.response.status = 204;
 };

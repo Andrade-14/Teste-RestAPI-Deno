@@ -1,17 +1,23 @@
-import { Application } from "https://deno.land/x/oak/mod.ts";
-import router from "./routes.ts";
+import { Application } from "https://deno.land/x/oak@v12.6.1/mod.ts";
+import router from "./routes/taskRoutes.ts";
 
 const app = new Application();
 
-// Middleware para log de requisições
 app.use(async (ctx, next) => {
-  console.log(`${ctx.request.method} ${ctx.request.url}`);
   await next();
+  const rt = ctx.response.headers.get("X-Response-Time");
+  console.log(`${ctx.request.method} ${ctx.request.url} - ${rt}`);
 });
 
-// Rotas
+app.use(async (ctx, next) => {
+  const start = Date.now();
+  await next();
+  const ms = Date.now() - start;
+  ctx.response.headers.set("X-Response-Time", `${ms}ms`);
+});
+
 app.use(router.routes());
 app.use(router.allowedMethods());
 
-console.log("Servidor rodando em http://localhost:8000");
+console.log("🚀 Server running on http://localhost:8000");
 await app.listen({ port: 8000 });
